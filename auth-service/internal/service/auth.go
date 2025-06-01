@@ -84,3 +84,23 @@ func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (model
 		RefreshToken: refreshToken,
 	}, nil
 }
+
+func (s *authService) GetUserByID(ctx context.Context, userId string) (*model.User, error) {
+	if userId == "" {
+		logger.LogError("User ID is empty", nil)
+		return nil, utils.ErrInvalidUserID
+	}
+
+	user, err := s.repo.GetUserByID(ctx, userId)
+	if err != nil {
+		logger.LogError("Failed to get user by ID", err)
+		return nil, err
+	}
+
+	if user == nil {
+		logger.LogError("User not found", nil)
+		return nil, utils.ErrUserNotFound
+	}
+
+	return user, nil
+}
