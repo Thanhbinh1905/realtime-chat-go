@@ -1,8 +1,9 @@
 package config
 
 import (
-	"auth-service/internal/logger"
 	"os"
+
+	"github.com/Thanhbinh1905/realtime-chat/shared/logger"
 )
 
 type Config struct {

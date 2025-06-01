@@ -1,19 +1,30 @@
 package main
 
 import (
+	"net/http"
+
+	"github.com/Thanhbinh1905/realtime-chat/auth-service/internal/config"
+	"github.com/Thanhbinh1905/realtime-chat/shared/logger"
 	"go.uber.org/zap"
 )
 
 func main() {
 	// Khởi tạo logger cho môi trường phát triển
-	logger, _ := zap.NewDevelopment()
-	defer logger.Sync() // Đảm bảo tất cả log được ghi ra trước khi thoát
+	logger.Init(true)
 
-	logger.Info("Đây là một log info từ logger phát triển",
-		zap.String("key", "value"),
-		zap.Int("count", 123),
-	)
-	logger.Debug("Đây là một log debug", zap.Bool("enabled", true))
-	logger.Warn("Đây là một cảnh báo", zap.Error(nil))
-	logger.Error("Đây là một lỗi", zap.Error(nil)) // Sử dụng nil cho ví dụ
+	// Tải cấu hình từ biến môi trường
+	cfg := config.LoadConfig()
+
+	logger.Log.Info("Starting Auth Service", zap.String("port", cfg.Port))
+
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Auth Service is running"))
+	})
+
+	// Thêm đoạn này để chạy server, log lỗi nếu có
+	err := http.ListenAndServe(":"+cfg.Port, nil)
+	if err != nil {
+		logger.Log.Fatal("Failed to start server", zap.Error(err))
+	}
 }
