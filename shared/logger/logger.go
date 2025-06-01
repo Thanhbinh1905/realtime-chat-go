@@ -17,3 +17,15 @@ func Init(isDev bool) {
 		panic("cannot initialize zap logger: " + err.Error())
 	}
 }
+
+func LogError(msg string, err error) {
+	if err != nil {
+		Log.Error(msg, zap.Error(err))
+	}
+}
+func LogInfo(msg string, fields ...zap.Field) {
+	Log.Info(msg, fields...)
+}
+func LogDebug(msg string, fields ...zap.Field) {
+	Log.Debug(msg, fields...)
+}
