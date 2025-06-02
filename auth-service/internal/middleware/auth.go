@@ -18,14 +18,21 @@ func New(cfg *config.Config) *Middleware {
 	return &Middleware{cfg: cfg}
 }
 
+type contextKey string
+
+const (
+	UserIDKey contextKey = "userID"
+	ClaimsKey contextKey = "claims"
+)
+
 func (m *Middleware) JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenStr := r.Header.Get("Authorization")
-		if tokenStr == "" || !strings.HasPrefix(tokenStr, "Bearer ") {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
 		claims := &utils.TokenClaims{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
@@ -36,7 +43,9 @@ func (m *Middleware) JWTAuthMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
-		ctx := context.WithValue(r.Context(), "userID", claims.UserID)
+
+		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+		ctx = context.WithValue(ctx, ClaimsKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

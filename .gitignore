@@ -1,0 +1,2 @@
+/data/postgres/auth-service/*
+!/data/postgres/auth-service/.gitkeep
