@@ -19,6 +19,8 @@ var validate = validator.New()
 type AuthService interface {
 	Register(ctx context.Context, user *model.User) error
 	Login(ctx context.Context, req *model.LoginRequest) (model.LoginResponse, error)
+
+	GetUserByID(ctx context.Context, userId string) (*model.User, error)
 }
 
 type authService struct {
@@ -83,4 +85,26 @@ func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (model
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (s *authService) GetUserByID(ctx context.Context, userId string) (*model.User, error) {
+	if userId == "" {
+		logger.LogError("User ID is empty", nil)
+		return nil, utils.ErrInvalidUserID
+	}
+
+	user, err := s.repo.GetUserByID(ctx, userId)
+	if err != nil {
+		logger.LogError("Failed to get user by ID", err)
+		return nil, err
+	}
+
+	if user == nil {
+		logger.LogError("User not found", nil)
+		return nil, utils.ErrUserNotFound
+	}
+
+	user.Password = "" // Clear password before returning\
+
+	return user, nil
 }

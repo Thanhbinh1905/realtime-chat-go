@@ -33,18 +33,24 @@ func main() {
 	service := service.NewAuthService(repo)
 	handler := handler.NewAuthHandler(service)
 
+	mw := middleware.New(cfg)
+
 	r := mux.NewRouter()
 
-	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	api := r.PathPrefix("/api/v1").Subrouter()
+
+	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("AuthService OK"))
 	}).Methods("GET")
 
-	r.HandleFunc("/register", handler.Register).Methods("POST")
+	api.HandleFunc("/register", handler.Register).Methods("POST")
 
-	r.HandleFunc("/login", handler.Login).Methods("POST")
+	api.HandleFunc("/login", handler.Login).Methods("POST")
 
-	r.Use(
+	api.Handle("/user", mw.JWTAuthMiddleware(http.HandlerFunc(handler.GetUserByID))).Methods("GET")
+
+	api.Use(
 		middleware.LoggingMiddleware,  // Middleware để ghi log
 		middleware.RecoveryMiddleware, // Middleware để phục hồi từ panic
 	)
